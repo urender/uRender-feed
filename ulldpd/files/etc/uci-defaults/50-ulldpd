@@ -1,0 +1,8 @@
+#!/bin/sh
+
+uci set lldp.@global[0].name="$(cat /tmp/sysinfo/model)"
+uci set lldp.@global[0].description="$(uname -a)"
+uci add_list lldp.@global[0].device="$(cat /etc/board.json | jsonfilter -e '@.network.lan.device')"
+for a in `cat /etc/board.json | jsonfilter -e '@.network.lan.ports.*'`; do
+	uci add_list lldp.@global[0].device="$a"
+done

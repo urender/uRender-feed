@@ -1,0 +1,43 @@
+#!/bin/sh
+
+help() {
+	echo UCI render
+	echo usage [-dtvh] FILE
+	echo
+	echo -e "\t-d\tdebug output"
+	echo -e "\t-d\tdebug output"
+	exit 1
+}
+
+. /usr/share/libubox/jshn.sh
+json_init
+
+# parse options
+while [ -n "$1" ]; do
+	case "$1" in
+	-d|--debug)
+		json_add_boolean debug 1
+		;;
+	-t|--test) 
+		json_add_boolean test 1
+		;;
+	-v|--verbose) 
+		json_add_boolean verbose 1
+		;;
+	-h|--help)
+		help
+		break;;
+	-*)
+		echo "Invalid option: $1" >&2
+		exit 1
+		;;
+	*) break;;
+	esac
+	shift;
+done
+
+[ ! -f "$1" ] && help
+
+json_add_string config "$1"
+
+/usr/share/urender/urender.uc "$(json_dump)"

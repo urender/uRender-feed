@@ -1,0 +1,12 @@
+config global
+	#option name		'hostname'
+	#option description	'description'
+	#list device		'eth0'
+	#list device		'eth1'
+	option ttl		'120'
+	option refresh		'30'
+	option repeater		'0'
+	option bridge		'1'
+	option ap		'1'
+	option router		'1'
+	option station		'0'

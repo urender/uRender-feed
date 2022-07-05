@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+
+START=80
+
+copy_certificates() {
+	[ -f /certificates/dev-id ] || return
+
+	cp /certificates/*.pem /etc/urender/
+	cp /certificates/dev-id /etc/urender/
+	chown root.network /etc/urender/*.pem
+	chmod 0440 root.network /etc/urender/*.pem
+	exit 0
+}
+
+boot() {
+	[ -f /etc/ucentral/key.pem ] && return
+	. /lib/functions.sh
+	mkdir -p /certificates /etc/urender/
+	local mtd=$(find_mtd_index certificates)
+	
+	if [ "$(head -c 4 /dev/mtd$mtd)" == "hsqs" ]; then
+		mount -t squashfs /dev/mtdblock$mtd /certificates
+	else
+		[ -n "$mtd" -a -f /sys/class/mtd/mtd$mtd/oobsize ] && ubiattach -p /dev/mtd$mtd
+		if [ -n "$(ubinfo -a | grep certificates)" ]; then
+			[ -e /dev/ubi0 ] && mount -t ubifs ubi0:certificates /certificates
+			[ -e /dev/ubi1 ] && mount -t ubifs ubi1:certificates /certificates
+		fi
+	fi
+	copy_certificates
+}

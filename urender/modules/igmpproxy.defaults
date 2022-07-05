@@ -1,0 +1,11 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+section_del() {
+        uci delete $2.$1
+}
+
+cp /etc/config/igmpproxy /etc/config-shadow/
+config_load igmpproxy
+config_foreach section_del phyint igmpproxy

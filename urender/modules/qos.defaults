@@ -1,0 +1,6 @@
+#!/bin/sh
+
+uci -c /etc/config-shadow delete qosify.wan
+uci -c /etc/config-shadow delete qosify.wandev
+uci -c /etc/config-shadow add_list qosify.@defaults[-1].defaults=/tmp/qosify.conf
+uci -c /etc/config-shadow commit qosify

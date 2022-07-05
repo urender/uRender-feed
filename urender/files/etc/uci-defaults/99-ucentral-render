@@ -1,0 +1,37 @@
+#!/bin/sh
+
+[ -d /etc/config-shadow/ ] && exit 0
+
+. /lib/functions.sh
+
+uci commit
+
+cp -r /etc/config/ /etc/config-shadow/
+
+section_del() {
+        uci -c /etc/config-shadow delete $2.$1
+}
+
+config_load network
+config_foreach section_del interface network
+config_foreach section_del bridge-vlan network
+config_foreach section_del device network
+
+config_load dhcp
+config_foreach section_del dhcp dhcp
+
+config_load firewall
+config_foreach section_del rule firewall
+config_foreach section_del zone firewall
+config_foreach section_del forwarding firewall
+
+config_load wireless
+config_foreach section_del wifi-iface wireless
+
+hname=$(cat /etc/board.json  | jsonfilter -e '@.system.label_macaddr')
+[ -z "$hname" ] && hname=$(cat /sys/class/net/eth0/address)
+hname=$(echo $hname | tr -d : | awk '{print tolower($0)}')
+uci -c /etc/config-shadow set system.@system[-1].hostname=$hname
+uci -c /etc/config-shadow set urender.config.serial=$hname
+
+uci -c /etc/config-shadow commit

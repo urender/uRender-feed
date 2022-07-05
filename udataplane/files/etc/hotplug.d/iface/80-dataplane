@@ -1,0 +1,28 @@
+[ "$ACTION" == 'ifup' ] || exit 0
+
+PRIO_START=0x1000
+PRIO_END=0x2000
+
+dev=$(ubus call network.interface.$INTERFACE status | jsonfilter -e '@.l3_device')
+program=$(uci get dataplane.$INTERFACE.program)
+tc qdisc add dev $dev clsact >/dev/null 2>&1
+tc filter sh dev $dev ingress | while read LINE; do
+	PREF="${LINE##*pref }"
+	PREF="${PREF%% *}"
+	[ "$PREF" -ge "$(($PRIO_START))" ] || continue
+	[ "$PREF" -lt "$(($PRIO_END))" ] || continue
+	case "$LINE" in
+		*handle*) continue;;
+	esac
+	LINE="${LINE##filter }"
+	LINE="${LINE%% chain *}"
+	tc filter del dev $dev ingress $LINE 2>&1 > /dev/null
+done
+PRIO=$(($PRIO_START))
+for p in $program; do                     
+	path=$(uci get dataplane.$p.program)
+	section=$(uci get dataplane.$p.section)
+	[ -f "$path" ] || continue
+	tc filter add dev $dev ingress prio $PRIO bpf obj $path ${section:+section $section} verbose direct-action
+	PRIO=$(($PRIO + 1))
+done 
